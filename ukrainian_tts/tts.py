@@ -75,7 +75,7 @@ class TTS:
             wav = self.synthesizer(text, spembs=self.xvectors[voice][0])["wav"]
 
         rtf = (time.time() - start) / (len(wav) / self.synthesizer.fs)
-        print(f"RTF = {rtf:5f}")
+        # print(f"RTF = {rtf:5f}")
 
         sf.write(
             output_fp,
@@ -87,7 +87,7 @@ class TTS:
 
         output_fp.seek(0)
 
-        return output_fp, text
+        return output_fp, text, rtf
 
     def __setup_cache(self, cache_folder=None):
         """Downloads models and stores them into `cache_folder`. By default stores in current directory."""
@@ -117,6 +117,7 @@ class TTS:
         self.synthesizer = Text2Speech(
             train_config=config_path, model_file=model_path, device=self.device
         )
+        # get xvectors dict (speaker: xvector (1,192))
         self.xvectors = {k: v for k, v in load_ark(speakers_path)}
 
     def __download(self, url, file_name):
