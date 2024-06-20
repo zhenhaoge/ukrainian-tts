@@ -1,3 +1,9 @@
+# Demo of TDNN vox2
+#
+# Reference: https://huggingface.co/yangwang825/tdnn-vox2
+#
+# Zhenhao Ge, 2024-06-06
+
 import os
 from pathlib import Path
 

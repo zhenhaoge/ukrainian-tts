@@ -49,7 +49,7 @@ from audio import wav_duration
 def filter_path(paths, keywords):
     for kw in keywords:
         paths = [f for f in paths if kw not in f]
-    return paths  
+    return paths
 
 def synthesize(text, spembs, output_file):
 

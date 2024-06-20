@@ -35,7 +35,6 @@ espnet_dir = '/home/users/zge/code/repo/espnet'
 ref_speaker_filepath = os.path.join(espnet_dir, 'egs/libritts/tts1/decode/example/xvectors', 'spk_xvector.ark')
 assert os.path.isfile(ref_speaker_filepath), \
     'ref speaker file: {} does not exist!'.format(ref_speaker_filepath)
-tmp = load_ark(ref_speaker_filepath)
 ref_xvectors = {k: v for k, v in load_ark(ref_speaker_filepath)}
 
 # option 2: using espnet/egs2/TEMPLATE/tts1/zge/extract_spk_embed.py with spkrec-xvector-voxceleb (dim 512)

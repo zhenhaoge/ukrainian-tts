@@ -1,7 +1,7 @@
-# demo for using speechbrain ecapa xvector model trained from voxceleb
+# Demo for using speechbrain ecapa xvector model trained from voxceleb
 #
-# references:
-#  - speechbrain 
+# References:
+#  - speechbrain huggingface model: https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb
 #  - speechbrain inference docs: https://speechbrain.readthedocs.io/en/0.5.7/API/speechbrain.pretrained.interfaces.html
 # Zhenhao Ge, 2024-06-05
 

@@ -1,5 +1,6 @@
 import json
 import csv
+import librosa
 
 def read_trans(trans_file):
 
@@ -37,6 +38,14 @@ def get_dur_from_meta(jsonfiles):
             durs_ref[i] = meta['end-time'] - meta['start-time']
             durs_syn[i] = meta['dur-syn']
     return durs_ref, durs_syn
+
+def get_dur_from_file(wavfiles):
+
+    num_wavfiles = len(wavfiles)
+    durs = [0 for _ in range(num_wavfiles)]
+    for i, f in enumerate(wavfiles):
+        durs[i]= librosa.get_duration(path=f)
+    return durs
 
 def dict2mat(d):
   """
