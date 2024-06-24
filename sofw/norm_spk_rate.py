@@ -22,7 +22,7 @@ if os.getcwd() != work_path:
 print('current path: {}'.format(os.getcwd()))
 
 from sofw.utils import get_dur_from_meta, get_dur_from_file
-from sofw.utils import dl2csv
+from sofw.utils import dl2csv, empty_dir
 from audio import adjust_speed
 
 keywords = '.16000,_converted,_ukr,_resampled,_paired,_unpaired'
@@ -66,6 +66,7 @@ if __name__ == '__main__':
 
     # create output path
     if os.path.isdir(args.output_path):
+        empty_dir(args.output_path)
         print('using existing output path: {}'.format(args.output_path))
     else:
         os.makedirs(args.output_path)

@@ -10,6 +10,7 @@ if os.getcwd() != work_path:
 print('current path: {}'.format(os.getcwd()))
 
 from audio import audioread, audiowrite
+from sofw.utils import empty_dir
 
 def parse_srt(srt_file):
     fid2text = {}
@@ -65,9 +66,11 @@ if __name__ == '__main__':
     # sofw_path = os.path.join(home_path, 'code', 'unclassified', 'SOFW')
     # recording_id = 'MARCHE_AssessmentTacticalEnvironment'
     # args.wav_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'data', 'audio',
-    #     '{}.wav'.format(recording_id)) 
-    # args.srt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'scripts',
-    #     '{}.eng.sentids'.format(recording_id))
+    #     '{}.wav'.format(recording_id))
+    # # args.srt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'scripts',
+    # #     '{}.eng.sentids'.format(recording_id)) # old version
+    # args.srt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'data', 'corrections',
+    #     '{}-ASRcorrected1.v1.eng.sentids'.format(recording_id)) # new version
     # args.out_path = os.path.join(work_path, 'data', recording_id, 'segments')
 
     # check file existance
@@ -75,6 +78,7 @@ if __name__ == '__main__':
     assert os.path.isfile(args.srt_file), 'srt file: {} does not exist!'.format(args.srt_file)
 
     if os.path.isdir(args.out_path):
+        empty_dir(args.out_path)
         print('use existing output path: {}'.format(args.out_path))
     else:
         os.makedirs(args.out_path)
@@ -114,7 +118,7 @@ if __name__ == '__main__':
 
     # kaldi data prep (wav.scp, text)
     kaldi_data_path = os.path.dirname(out_path)
-    os.makedirs(kaldi_pat)
+    os.makedirs(kaldi_data_path, exist_ok=True)
 
     # write wav.scp
     scp_file = os.path.join(kaldi_data_path, 'wav.scp')

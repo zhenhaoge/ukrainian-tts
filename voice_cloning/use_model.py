@@ -6,7 +6,7 @@
 # conclusion:
 #   - current framework does not generalize well to the unseen speaker, even though using the same
 #     xvector model
-#   - The system has already done its best to pick up the most close voice, but it definitely sounds
+#   - The system has already done its best to pick up the closest voice, but it definitely sounds
 #     like one of the 5 in-domain seen speaker's voice
 #   - the avg. speaker similarity score is only 0.11 (>0.7 can be considered to be the same speaker)
 # 
@@ -20,6 +20,7 @@ import torchaudio
 import torch
 import numpy as np
 import soundfile as sf
+import time
 from speechbrain.pretrained import EncoderClassifier, SpeakerRecognition
 
 # set paths
@@ -37,7 +38,7 @@ from sofw.utils import read_trans, parse_fid
 def filter_path(paths, keywords):
     for kw in keywords:
         paths = [f for f in paths if kw not in f]
-    return paths    
+    return paths
 
 def synthesize(text, spembs, output_file):
 
@@ -85,6 +86,13 @@ recording_id = 'MARCHE_AssessmentTacticalEnvironment'
 speaker_path = os.path.join(work_path, 'data', recording_id, 'segments')
 assert os.path.isdir(speaker_path), 'speaker dir: {} does not exist!'.format(speaker_path)
 
+# trans_path = '/home/splola/kathol/SOFW/StaticVideos/scripts'
+# trans_file = os.path.join(trans_path, '{}.ukr.cor.sentids'.format(recording_id))
+
+trans_path = '/home/splola/kathol/SOFW/StaticVideos/data/corrections'
+trans_file = os.path.join(trans_path, '{}-ASRcorrected1.v1.ukr.sentids'.format(recording_id))
+assert os.path.isfile(trans_file), 'transcription file: {} does not exist!'.format(trans_file)
+
 # get the list of sentences (id, text) from the transcription file
 sentences = read_trans(trans_file)
 num_sents = len(sentences)
@@ -95,10 +103,6 @@ keywords = ['_ukr', '_new', '_resampled', '16000']
 speaker_filepaths = filter_path(speaker_filepaths, keywords=keywords)
 num_spkr_files = len(speaker_filepaths)
 print('# of speaker files: {}'.format(num_spkr_files))
-
-trans_path = '/home/splola/kathol/SOFW/StaticVideos/scripts'
-trans_file = os.path.join(trans_path, '{}.ukr.cor.sentids'.format(recording_id))
-assert os.path.isfile(trans_file), 'transcription file: {} does not exist!'.format(trans_file)
 
 assert num_spkr_files == num_sents, '#ref speaker files and #sentences mis-match!'
 
@@ -121,6 +125,8 @@ num_processed = min(num_sents, num_lim)
 scores = [0 for _ in range(num_processed)]
 predictions = [False for _ in range(num_processed)]
 
+durations = [0 for _ in range(num_processed)]
+rtfs = [0 for _ in range(num_processed)]
 for i in range(num_processed):
 
     print('processing sentence {}/{} ...'.format(i+1, num_processed))
@@ -132,8 +138,13 @@ for i in range(num_processed):
     text = preprocess_text(text)
     text = sentence_to_stress(text, stress_with_model if stress else stress_dict)
 
+    # get speaker file
     speaker_filepath = speaker_filepaths[i]
     assert os.path.isfile(speaker_filepath), 'speaker path: {} does not exist!'.format(speaker_filepath)
+
+    start = time.time()
+
+    # load speaker file (resample if needed)
     y, sr = torchaudio.load(speaker_filepath)
     if sr != target_sr:
         y2 = librosa.resample(y.numpy(), orig_sr=sr, target_sr=target_sr)
@@ -141,9 +152,15 @@ for i in range(num_processed):
     else:
         y2 = y
 
+    # extract speaker embedding
     spemb = classifier.encode_batch(y2, normalize=False)
     spemb_reshaped = spemb.squeeze() # shape: torch.Size([192])
     spemb_np = spemb_reshaped.numpy()
+
+    # get elapsed time for embedding extraction (including file loading, resampling)
+    end = time.time()
+    durations[i] = end - start
+    rtfs[i] = durations[i] / (len(y[0])/sr)
 
     # if voice in voice_list:
     #     spemb0_np = tts.xvectors[voice][0]
@@ -158,6 +175,8 @@ for i in range(num_processed):
     waveform_x = verification.load_audio(speaker_filepath) # waveform_x.shape: [60930]
     waveform_y = verification.load_audio(output_file) # waveform_y.shape: [60930]
     print('waveform_x.shape: {}, waveform_y.shape: {}'.format(waveform_x.shape, waveform_y.shape))
+
+    # check if they are the same (optional)
     compare_ref_out = torch.equal(waveform_x, waveform_y)
     if compare_ref_out == True:
         print('{}/{}: output is the same as reference! referece: {} = output: {}'.format(
@@ -185,6 +204,10 @@ for i in range(num_processed):
     # signal2, fs = torchaudio.load(output_file2)
     # spemb2 = classifier.encode_batch(signal2, normalize=False)
     # score = verification.similarity(spemb, spemb2)
+
+# show embedding extraction duration
+print('avg. duration (also RTF) to extract speaker embedding: {:.2f} ({:.2f})'.format(
+    np.mean(durations), np.mean(rtfs)))
 
 # get avg. score (tetiana: 0.94, mykyta: 0.93, lada: 0.95, dmytro: 0.92, oleksa: 0.94)
 score_list = [float(s[0].numpy()) for s in scores[:i]]
