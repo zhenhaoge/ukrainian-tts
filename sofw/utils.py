@@ -60,16 +60,16 @@ def dict2mat(d):
       m[i][j] = d[k1,k2]
   return m, key1, key2
 
-def tuple2csv(tuples, csvname='filename.csv', colname=[], verbose=True):
-  with open(csvname, 'w', newline='') as f:
-    csv_out = csv.writer(f)
-    if len(colname) != 0:
-      header = colname
-      csv_out.writerow(header)
-    for i, tpl in enumerate(tuples):
-      csv_out.writerow(list(tpl))
-  if verbose:
-    print('{} saved!'.format(csvname))
+def tuple2csv(tuple_list, csvname, delimiter=',', header=[], verbose=True):
+    with open(csvname, 'w', newline='') as f:
+        csv_out = csv.writer(f, delimiter=delimiter)
+        if header:
+            csv_out.writerow(header)
+        n = len(tuple_list)
+        for i in range(n):
+            csv_out.writerow(list(tuple_list[i]))
+    if verbose:
+        print('{} saved!'.format(csvname))
 
 def mat2csv(mat, csvname='filename.csv', colname=[], rowname=[], verbose=True):
   """
@@ -231,3 +231,44 @@ def set_path(path, verbose=False):
     os.makedirs(path)
     if verbose:
       print('created path: {}'.format(path))
+
+def get_ts_from_filename(wavfiles):
+    """get (fid, start_time, end_time) from filename"""
+
+    num_segments = len(wavfiles)
+    tuple_list = [() for _ in range(num_segments)]
+    for i in range(num_segments):
+        wav_file = wavfiles[i]
+        wav_filename = os.path.basename(wav_file)
+        parts = os.path.splitext(wav_filename)[0].split('_')
+        fid, start_time, end_time = parts[:3]
+        fid = int(fid)
+        start_time = float(start_time)
+        end_time = float(end_time)
+        tuple_list[i] = (fid, start_time, end_time)
+    return tuple_list
+
+def find_bound(ts_lst, idx, dur_total, gap=0.1):
+    """find the lower and upper bounds of the segment with idx
+       gap is the min duration between segments"""
+
+    nsegments = len(ts_lst)
+
+    if idx == 0: # first segment
+        lower_bound = round(min(ts_lst[idx][1], gap), 2)
+        upper_bound = round(ts_lst[1][1]-gap, 2)
+    elif idx == nsegments - 1: # final segment
+        lower_bound = round(ts_lst[idx-1][2]+gap, 2)
+        upper_bound = round(dur_total, 2)
+    else: # middle segments
+        lower_bound = round(ts_lst[idx-1][2]+gap, 2)
+        upper_bound = round(ts_lst[idx+1][1]-gap, 2)
+
+    return lower_bound, upper_bound
+
+def get_scaled_ts(lower_bound, upper_bound, duration_scaled):
+    """get the timestamps of the scaled segment by putting it in the middle of (lower_bound, upper_bound)"""
+    mid = lower_bound + (upper_bound-lower_bound)/2
+    start_time_scaled = round(mid-duration_scaled/2, 2)
+    end_time_scaled = round(mid+duration_scaled/2, 2)
+    return start_time_scaled, end_time_scaled

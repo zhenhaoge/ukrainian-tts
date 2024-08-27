@@ -21,7 +21,7 @@ keywords='.16000,_converted,_ukr,_resampled,_paired,_unpaired'
 # reference_path=$WORK_DIR/data/${recording_id}/segments # dir to all segments
 # appendix=v1
 
-# # v2: convert to the english spaeker's voice using averaged speaker embedding
+# # v2: convert to the english speaker's voice using averaged speaker embedding
 # reference_path=$WORK_DIR/data/${recording_id}/segments_all.wav # path of concatenated segment
 # appendix=v2
 

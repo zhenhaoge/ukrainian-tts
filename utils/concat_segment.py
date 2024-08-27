@@ -47,7 +47,7 @@ def f2embed(wav_file, classifier, size_embed):
         embeddings = F.normalize(embeddings, dim=2)
         embeddings = embeddings.squeeze().cpu().numpy()
     assert embeddings.shape[0] == size_embed, embeddings.shape[0]
-    return embeddings    
+    return embeddings
 
 def parse_args():
     usage = "usage: concatenate audio segments"
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         concat_wavpath2 = concat_wavpath
         y2 = y1
 
-    # get speaker embedding of the concatenated segment    
+    # get speaker embedding of the concatenated segment
     embeddings = f2embed(concat_wavpath2, classifier, size_embed)
 
     # save to .npy file
