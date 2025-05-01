@@ -1,10 +1,12 @@
 #!/bin/bash
 #
+# combine the overlayed audio with video, and add subtitle
+#
 # Zhenhao Ge, 2024-07-10
 
-recording_id=MARCHE_AssessmentTacticalEnvironment
-voice=dmytro
-stress=dictionary
+recording_id=${1:-MARCHE_AssessmentTacticalEnvironment}
+voice=${2:-dmytro}
+stress=${3:-dictionary}
 
 # set dirs
 HOME_DIR=$HOME/code/repo/ukr-tts
@@ -59,18 +61,20 @@ echo "overlayed audio duration $audio_dur_overlayed"
 
 # extract video without audio from the original video
 if [ ! -f $VIDEO_FILE_SIL ]; then
-    ffmpeg -i $VIDEO_FILE_ORI -c copy -an $VIDEO_FILE_SIL
+    echo "extracting video without audio from $VIDEO_FILE_ORI ..."
+    ffmpeg -y -i $VIDEO_FILE_ORI -c copy -an $VIDEO_FILE_SIL
 fi
 
-# combine audio and video (no sound) files
-ffmpeg -i $VIDEO_FILE_SIL -i $AUDIO_FILE_OVL -c:v copy -c:a aac $VIDEO_FILE_CMD
+# combine audio and video (no sound) files to get video with bg+ukr audio
+ffmpeg -y -i $VIDEO_FILE_SIL -i $AUDIO_FILE_OVL -c:v copy -c:a aac $VIDEO_FILE_CMD
 echo "$(basename $VIDEO_FILE_SIL) + $(basename $AUDIO_FILE_OVL) -> $(basename $VIDEO_FILE_CMD)"
 
 # create the subtitle file
 python sofw/prep_srt.py \
   --meta-file $STT_FILE_IN \
   --srt-file $STT_FILE_OUT
+echo "generated .srt subtitle file: $STT_FILE_OUT"
 
 # add soft subtile to the video file
-ffmpeg -i $VIDEO_FILE_CMD -i $STT_FILE_OUT -c copy -c:s mov_text -metadata:s:s:0 language=ukr $VIDEO_FILE_STT
+ffmpeg -y -i $VIDEO_FILE_CMD -i $STT_FILE_OUT -c copy -c:s mov_text -metadata:s:s:0 language=ukr $VIDEO_FILE_STT
 echo "$(basename $VIDEO_FILE_CMD) + $(basename $STT_FILE_OUT) -> $(basename $VIDEO_FILE_STT)"

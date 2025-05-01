@@ -1,12 +1,12 @@
-# scale the translated audio segments to have the same total duration of the original segments
+# time scale and shift the translated audio segments to match with the original audio segments
 # adjust the start time and end time of the scaled segment to fit in the space, here are the strategies used
 #  - use the context silence space with minimum gap
 #  - scale more than the averge (up to the cap of 1.5x)
 #  - shift the next segment for a delayed start time (offset)
 #
-# this script was developed similarly as ukr-tts/sofw/norm_spk_rate.py, but it more complicated
-# norm_spk_rate.py just scale the segments with an overall scaling factor, but here it do other tricks to avoid
-# overlap and still maintaining the syncness with the original segments
+# this script is an improved version of ukr-tts/sofw/norm_spk_rate.py. norm_spk_rate.py just scale the segments
+# with an overall scaling factor, but here it do other tricks to avoid overlap and still maintaining the syncness
+# with the original segments
 #
 # Zhenhao Ge, 2024-07-05
 
@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument('--meta-dir', type=str, help='meta dir where to get the meta data')    
     parser.add_argument('--audio-file', type=str, help='audio file to extract segments from')
     parser.add_argument('--speed-lim', type=float, default=1.5, \
-        help='speed-up limit from original tts segments to scaled tts segments')
+        help='speed-up limit from the original tts segments to the scaled tts segments')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -58,11 +58,11 @@ if __name__ == '__main__':
     args = parse_args()
 
     # # interactive mode
-    # work_dir = os.getcwd()
     # recording_id = 'MARCHE_AssessmentTacticalEnvironment'
     # data_dir = os.path.join(work_dir, 'data', recording_id)
     # voice = 'dmytro'
     # stress = 'dictionary'
+
     # args = argparse.ArgumentParser()
     # # args.in_dir = os.path.join(work_dir, 'outputs', 'sofw', 'espnet', recording_id, '{}-{}'.format(voice, stress))
     # args.in_dir = os.path.abspath(os.path.join(work_dir, os.pardir, 'free-vc', 'outputs', recording_id, f'freevc-24_{voice}-{stress}'))
@@ -98,6 +98,10 @@ if __name__ == '__main__':
     print(f'audio file: {audio_file}')
     print(f'speed lim: {speed_lim}x')
 
+    # get recording id
+    recording_id = os.path.splitext(os.path.basename(audio_file))[0]
+    print(f'recording id: {recording_id}')
+
     # get the input audio files
     input_audiofiles = sorted(glob.glob(os.path.join(in_dir, '*.wav')))
     input_audiofiles = filter_path(input_audiofiles, keywords)
@@ -122,10 +126,11 @@ if __name__ == '__main__':
 
     # get the overall speed factor for speaking rate normalization
     speed = dur_syn_total / dur_ref_total
-    print('average speed factor: {:.3f}'.format(speed))
+    print('average speed factor: {:.3f}'.format(speed)) # 1.261 for the demo recording
 
     # get the duration of the entire audio file
     dur_total = librosa.get_duration(path=audio_file)
+    print(f'total duration of the audio file {audio_file}: {dur_total:.2f} seconds')
 
     # find the adjusted timestamps for the scaled segments   
     ts_ref = [() for _ in range(nsegments)]
@@ -243,10 +248,10 @@ if __name__ == '__main__':
             scaling_type_dct[k] += 1
         else:
             scaling_type_dct[k] = 1
-    print('scaling type counts:')        
+    print('scaling type counts:')
     for k in sorted(scaling_type_dct.keys()):
         percent = scaling_type_dct[k] / nsegments
-        print(f'{k}: {scaling_type_dct[k]} ({percent*100:.2f}%)')
+        print(f'case {k}: {scaling_type_dct[k]} ({percent*100:.2f}%)')
 
     # check duration offsets (cases that segment has to be shifted to a later start time due to no-space)
     duration_offsets_pos = [v for v in duration_offsets if v > 0]

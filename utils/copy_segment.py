@@ -5,7 +5,7 @@
 # version 3: voice-converted ukrainian audio segments
 # version 4: voice-converted and time-scaled ukrainian audio segments
 #
-# Zhenhao Ge, 2024-06
+# Zhenhao Ge, 2024-06-21
 
 import os
 from pathlib import Path
@@ -20,7 +20,7 @@ if os.getcwd() != work_path:
     os.chdir(work_path)
 print('current path: {}'.format(os.getcwd()))
 
-from sofw.utils import set_path
+from sofw.utils import set_path, empty_dir
 
 def filter_path(paths, keywords):
     for kw in keywords:
@@ -48,26 +48,27 @@ def parse_args():
     parser.add_argument('--out-path', type=str, help='output path')
     parser.add_argument('--keywords', type=str, \
         help="seperated by comma to filter out, e.g., '16000', '_new'")
+    return parser.parse_args()
 
 if __name__ == '__main__':
 
     # runtime mode
     args = parse_args()
 
-    # interactive mode
-    args = argparse.ArgumentParser()
+    # # interactive mode
+    # args = argparse.ArgumentParser()
 
-    recording_id = 'MARCHE_AssessmentTacticalEnvironment'
-    voice = 'dmytro'
-    stress = 'dictionary'
-    spk_folder = f'{voice}-{stress}'
+    # recording_id = 'MARCHE_AssessmentTacticalEnvironment'
+    # voice = 'dmytro'
+    # stress = 'dictionary'
+    # spk_folder = f'{voice}-{stress}'
 
-    args.ori_path = os.path.join(work_path, 'data', recording_id, 'segments')
-    args.syn_path = os.path.join(work_path, 'outputs', 'sofw', 'espnet', recording_id, spk_folder)
-    args.converted_path = os.path.join(home_path, 'code', 'repo', 'free-vc', 'outputs', recording_id, f'freevc-24_{spk_folder}')
-    args.scaled_path = args.converted_path + '_scaled'
-    args.out_path = os.path.join(work_path, 'outputs', 'sofw', 'demo', recording_id, spk_folder)
-    args.keywords = '.16000,_new,_converted,_paired,_unpaired, _v1, _v2, _v2, _v4'
+    # args.ori_path = os.path.join(work_path, 'data', recording_id, 'segments')
+    # args.syn_path = os.path.join(work_path, 'outputs', 'sofw', 'espnet', recording_id, spk_folder)
+    # args.converted_path = os.path.join(home_path, 'code', 'repo', 'free-vc', 'outputs', recording_id, f'freevc-24_{spk_folder}')
+    # args.scaled_path = args.converted_path + '_scaled'
+    # args.out_path = os.path.join(work_path, 'outputs', 'sofw', 'demo', recording_id, spk_folder)
+    # args.keywords = '.16000,_new,_converted,_paired,_unpaired, _v1, _v2, _v2, _v4'
 
     # localize arguments
     ori_path = args.ori_path
@@ -85,6 +86,7 @@ if __name__ == '__main__':
 
     # set the output path
     set_path(out_path, verbose=True)
+    empty_dir(out_path)
 
     # print paths
     print(f'path to the original english audio segments: {ori_path}')

@@ -98,15 +98,25 @@ if __name__ == '__main__':
     num_sents2 = len(sentences2)
     fids2 = [fid for (fid, text) in sentences2]
 
+    # get number of segments (sentences)
     assert num_sents1 == num_sents2, '#sentences in the source and target transcription files mis-match!'
-    open(os.path.join(work_path, 'fid1.txt'), 'w').writelines('\n'.join(fids1))
-    open(os.path.join(work_path, 'fid2.txt'), 'w').writelines('\n'.join(fids2))
-    fid_diff_pairs = [(fid1, fid2) for (fid1, fid2) in zip(fids1, fids2) if fid1!=fid2]
-    if len(fid_diff_pairs) > 0:
-        print('fids in the source and target transcription files mis-match, take the source timestamps!')
     num_sents = num_sents1
-    fids = fids1
-    del num_sents1, num_sents2, fids1, fids2
+    del num_sents1, num_sents2
+
+    # # write fids1 and fids2
+    # open(os.path.join(work_path, 'fid1.txt'), 'w').writelines('\n'.join(fids1))
+    # open(os.path.join(work_path, 'fid2.txt'), 'w').writelines('\n'.join(fids2))
+
+    # check if fids in source and target segments are different
+    fid_diff_pairs = [(fid1, fid2) for (fid1, fid2) in zip(fids1, fids2) if fid1!=fid2]
+    num_fid_diff_pairs = len(fid_diff_pairs)
+    if num_fid_diff_pairs > 0:
+        print(f'warning: {num_fid_diff_pairs}/{num_sents} fids in the source and target transcription files mis-match, take the target timestamps!')
+
+    # get the unified fids (from the target fids)
+    fids = fids2
+    del fids1, fids2
+
     print('there are {} sentences in source trans file {} and target trans file {}'.format(
         num_sents, os.path.basename(args.trans_file1), os.path.basename(args.trans_file2)))
 

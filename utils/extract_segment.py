@@ -1,3 +1,7 @@
+# extract the audio segments
+#
+# Zhenhao Ge, 2024-06-08
+
 import os
 from pathlib import Path
 import argparse
@@ -12,9 +16,10 @@ print('current path: {}'.format(os.getcwd()))
 from audio import audioread, audiowrite
 from sofw.utils import empty_dir
 
-def parse_srt(srt_file):
+def parse_txt(txt_file):
+    """parse the text file, which contains the segment id and the corresponding text per line"""
     fid2text = {}
-    lines = open(srt_file, 'r').readlines()
+    lines = open(txt_file, 'r').readlines()
     for i, line in enumerate(lines):
         parts = line.strip().split()
         fid = parts[0]
@@ -41,18 +46,18 @@ def write_utt2spk(utt2spk_file, fids, spk_id):
     with open(utt2spk_file, 'w') as f:
         for fid in fids:
             f.write('{} {}\n'.format(fid, spk_id))
-    print('wrote utt2spk: {}'.format(utt2spk_file))             
+    print('wrote utt2spk: {}'.format(utt2spk_file))
 
 def parse_args():
     usage = 'usage: extract audio segments'
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument('--wav-file', type=str,
         help='single audio wav file to extract segments from')
-    parser.add_argument('--srt-file', type=str,
-        help='srt file contains id and text')
+    parser.add_argument('--txt-file', type=str,
+        help='text file contains id and text')
     parser.add_argument('--out-path', type=str,
         help='output path to save segments')
-    return parser.parser_args()
+    return parser.parse_args()
 
 if __name__ == '__main__':
 
@@ -67,15 +72,15 @@ if __name__ == '__main__':
     # recording_id = 'MARCHE_AssessmentTacticalEnvironment'
     # args.wav_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'data', 'audio',
     #     '{}.wav'.format(recording_id))
-    # # args.srt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'scripts',
+    # # args.txt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'scripts',
     # #     '{}.eng.sentids'.format(recording_id)) # old version
-    # args.srt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'data', 'corrections',
+    # args.txt_file = os.path.join(sofw_path, 'kathol', 'StaticVideos', 'data', 'corrections',
     #     '{}-ASRcorrected1.v1.eng.sentids'.format(recording_id)) # new version
     # args.out_path = os.path.join(work_path, 'data', recording_id, 'segments')
 
     # check file existance
     assert os.path.isfile(args.wav_file), 'wav file: {} does not exist!'.format(args.wav_file)
-    assert os.path.isfile(args.srt_file), 'srt file: {} does not exist!'.format(args.srt_file)
+    assert os.path.isfile(args.txt_file), 'txt file: {} does not exist!'.format(args.txt_file)
 
     if os.path.isdir(args.out_path):
         empty_dir(args.out_path)
@@ -86,11 +91,16 @@ if __name__ == '__main__':
 
     # localize arguments
     wav_file = args.wav_file
-    srt_file = args.srt_file
+    txt_file = args.txt_file
     out_path = args.out_path
 
+    # print out arguments
+    print(f'wav file: {wav_file}')
+    print(f'txt file: {txt_file}')
+    print(f'out path: {out_path}')
+
     # extract the fid2text dict from the srt file
-    fid2text = parse_srt(srt_file)
+    fid2text = parse_txt(txt_file)
     fids = sorted(fid2text.keys())
 
     # get the number of fids
@@ -112,24 +122,24 @@ if __name__ == '__main__':
         # write audio segment
         out_file = os.path.join(out_path, '{}.wav'.format(fid))
         audiowrite(out_file, data, params)
-        print('wrote {}'.format(out_file))
+        print(f'{i}/{num_fids}: wrote {out_file}')
 
         out_files[i] = out_file
 
-    # kaldi data prep (wav.scp, text)
-    kaldi_data_path = os.path.dirname(out_path)
-    os.makedirs(kaldi_data_path, exist_ok=True)
+    # # kaldi data prep (wav.scp, text)
+    # kaldi_data_path = os.path.dirname(out_path)
+    # os.makedirs(kaldi_data_path, exist_ok=True)
 
-    # write wav.scp
-    scp_file = os.path.join(kaldi_data_path, 'wav.scp')
-    write_scp(scp_file, fids, out_files)
+    # # write wav.scp
+    # scp_file = os.path.join(kaldi_data_path, 'wav.scp')
+    # write_scp(scp_file, fids, out_files)
 
-    # write text
-    texts = [fid2text[fid] for fid in fids]
-    text_file = os.path.join(kaldi_data_path, 'text')
-    write_text(text_file, fids, texts)
+    # # write text
+    # texts = [fid2text[fid] for fid in fids]
+    # text_file = os.path.join(kaldi_data_path, 'text')
+    # write_text(text_file, fids, texts)
 
-    # write utt2spk
-    spk_id = '0'
-    utt2spk_file = os.path.join(kaldi_data_path, 'utt2spk')
-    write_utt2spk(utt2spk_file, fids, spk_id)
+    # # write utt2spk
+    # spk_id = '0'
+    # utt2spk_file = os.path.join(kaldi_data_path, 'utt2spk')
+    # write_utt2spk(utt2spk_file, fids, spk_id)

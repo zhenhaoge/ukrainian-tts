@@ -235,18 +235,30 @@ def set_path(path, verbose=False):
 def get_ts_from_filename(wavfiles):
     """get (fid, start_time, end_time) from filename"""
 
-    num_segments = len(wavfiles)
-    tuple_list = [() for _ in range(num_segments)]
-    for i in range(num_segments):
-        wav_file = wavfiles[i]
-        wav_filename = os.path.basename(wav_file)
-        parts = os.path.splitext(wav_filename)[0].split('_')
-        fid, start_time, end_time = parts[:3]
-        fid = int(fid)
-        start_time = float(start_time)
-        end_time = float(end_time)
-        tuple_list[i] = (fid, start_time, end_time)
-    return tuple_list
+    if type(wavfiles) == list:
+      num_segments = len(wavfiles)
+      tuple_list = [() for _ in range(num_segments)]
+      for i in range(num_segments):
+          wav_file = wavfiles[i]
+          wav_filename = os.path.basename(wav_file)
+          parts = os.path.splitext(wav_filename)[0].split('_')
+          fid, start_time, end_time = parts[:3]
+          fid = int(fid)
+          start_time = float(start_time)
+          end_time = float(end_time)
+          tuple_list[i] = (fid, start_time, end_time)
+      return tuple_list
+    elif type(wavfiles) == str:
+      wav_file = wavfiles
+      wav_filename = os.path.basename(wav_file)
+      parts = os.path.splitext(wav_filename)[0].split('_')
+      fid, start_time, end_time = parts[:3]
+      fid = int(fid)
+      start_time = float(start_time)
+      end_time = float(end_time)
+      return (fid, start_time, end_time)
+    else:
+      raise Exception('input argument should be either list or string!')
 
 def find_bound(ts_lst, idx, dur_total, gap=0.1):
     """find the lower and upper bounds of the segment with idx
@@ -272,3 +284,13 @@ def get_scaled_ts(lower_bound, upper_bound, duration_scaled):
     start_time_scaled = round(mid-duration_scaled/2, 2)
     end_time_scaled = round(mid+duration_scaled/2, 2)
     return start_time_scaled, end_time_scaled
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
